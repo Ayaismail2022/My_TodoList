@@ -267,8 +267,8 @@ body {
   padding: 0;
 }
 .container {
-  margin: 20px auto;
-  width: 50%;
+  margin: 0 auto;
+  width: 100%;
   max-width: 650px;
   background: #fff;
   padding: 30px;
@@ -378,7 +378,7 @@ ul {
 
 .container {
   margin: 20px auto;
-  width: 50%;
+  width: 100%;
   max-width: 650px;
   background: #ffffff;
   padding: 30px;
