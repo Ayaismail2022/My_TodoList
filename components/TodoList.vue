@@ -247,13 +247,18 @@ watch(darkMode, (value) => {
 onMounted(() => {
   loadGoals()
 
+  // ✅ استرجاع وضع الدارك مود من localStorage
+  const savedDarkMode = localStorage.getItem('darkMode')
+  if (savedDarkMode !== null) {
+    darkMode.value = JSON.parse(savedDarkMode)
+  }
+
   nextTick(() => {
     inputRef.value?.focus()
   })
 })
 </script>
 
-<!-- باقي الـ style زي ما هو -->
 <style scoped>
 * {
   margin: 0;
