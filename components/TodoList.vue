@@ -1,4 +1,10 @@
 <template>
+  <div class="stars-container">
+    <div class="stars layer-1"></div>
+    <div class="stars layer-2"></div>
+    <div class="stars layer-3"></div>
+  </div>
+
   <div class="container" :class="{ dark: darkMode }">
     <h1>
       ✨ My Goals
@@ -35,7 +41,6 @@
     <ul>
       <li v-for="(goal, index) in filteredGoals" :key="goal.id" class="goal-item">
         <div style="flex: 1">
-          <!-- ✏️ Inline Edit -->
           <input
             v-if="editingIndex === index"
             :id="'edit-input-' + index"
@@ -45,7 +50,6 @@
             @keyup.esc="cancelEdit"
           />
 
-          <!-- 📝 Normal view -->
           <span
             v-else
             class="task-text"
@@ -79,7 +83,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
 
-// State
+// الحالة (State)
 const goals = ref([])
 const newGoalText = ref('')
 const errorMessage = ref('')
@@ -88,13 +92,13 @@ const inputRef = ref(null)
 const filterType = ref('all')
 const darkMode = ref(false)
 
-// ✨ Inline editing state
+// حالة التعديل الداخلي
 const editingIndex = ref(null)
 const editedText = ref('')
 
 const STORAGE_KEY = 'goals'
 
-// Load
+// تحميل الأهداف
 const loadGoals = () => {
   const stored = localStorage.getItem(STORAGE_KEY)
   if (stored) {
@@ -106,12 +110,12 @@ const loadGoals = () => {
   }
 }
 
-// Save
+// حفظ الأهداف
 const saveGoals = () => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(goals.value))
 }
 
-// Validation
+// التحقق من المدخلات
 const validateGoal = (text) => {
   if (!text || !text.trim()) {
     errorMessage.value = '⚠️ الرجاء كتابة الهدف أولاً!'
@@ -137,7 +141,7 @@ const handleEditButton = (index, goal) => {
   }
 }
 
-// Add
+// إضافة هدف جديد
 const addGoal = () => {
   const text = newGoalText.value.trim()
 
@@ -157,7 +161,7 @@ const addGoal = () => {
   })
 }
 
-// Toggle complete
+// تبديل حالة الاكتمال
 const toggleComplete = (index) => {
   if (editingIndex.value === index) return
   goals.value[index].completed = !goals.value[index].completed
@@ -172,14 +176,13 @@ const startEdit = (index, text) => {
       const editInput = document.getElementById(`edit-input-${index}`)
       if (editInput) {
         editInput.focus()
-        // خلي المؤشر في آخر النص بدل ما يحدد الكل
         editInput.setSelectionRange(editInput.value.length, editInput.value.length)
       }
     }, 50)
   })
 }
 
-// Save edit
+// حفظ التعديل
 const saveEdit = (index) => {
   const text = editedText.value.trim()
 
@@ -190,29 +193,28 @@ const saveEdit = (index) => {
   editedText.value = ''
 }
 
-// Cancel edit
+// إلغاء التعديل
 const cancelEdit = () => {
   editingIndex.value = null
   editedText.value = ''
 }
 
-// Delete
+// حذف الهدف
 const deleteGoal = (index) => {
   if (confirm('هل أنت متأكد من حذف هذا الهدف؟')) {
     goals.value.splice(index, 1)
   }
 }
 
-// Enter
+// معالجة الضغط على المفاتيح
 const handleKeyPress = (event) => {
   if (event.key === 'Enter') {
     addGoal()
   }
 }
 
-// Computed
+// Computed Properties
 const completedGoals = computed(() => goals.value.filter((g) => g.completed).length)
-
 const pendingGoals = computed(() => goals.value.filter((g) => !g.completed).length)
 
 const filteredGoals = computed(() => {
@@ -225,33 +227,32 @@ const filteredGoals = computed(() => {
   return goals.value
 })
 
-// Watch save
-watch(
-  goals,
-  () => {
-    saveGoals()
-  },
-  { deep: true },
-)
+// مراقبة الحفظ التلقائي
+watch(goals, () => {
+  saveGoals()
+}, { deep: true })
 
-// Dark mode
+// مراقبة وضع الدارك مود
 watch(darkMode, (value) => {
   localStorage.setItem('darkMode', JSON.stringify(value))
-
-  document.body.style.background = value
-    ? 'linear-gradient(135deg,#1e1b4b,#4c1d95)'
-    : 'linear-gradient(135deg,#667eea,#764ba2)'
+  updateBodyBackground(value)
 })
 
-// Mounted
+const updateBodyBackground = (isDarkMode) => {
+  document.body.style.background = isDarkMode
+    ? 'linear-gradient(135deg, #0f172a, #1e1b4b, #2e103f)'
+    : 'linear-gradient(135deg, #667eea, #764ba2, #a18cd1)'
+}
+
 onMounted(() => {
   loadGoals()
 
-  // ✅ استرجاع وضع الدارك مود من localStorage
   const savedDarkMode = localStorage.getItem('darkMode')
   if (savedDarkMode !== null) {
     darkMode.value = JSON.parse(savedDarkMode)
   }
+
+  updateBodyBackground(darkMode.value)
 
   nextTick(() => {
     inputRef.value?.focus()
@@ -266,136 +267,103 @@ onMounted(() => {
   box-sizing: border-box;
   font-family: 'Cairo', sans-serif;
 }
-body {
+:global(body) {
   min-height: 100vh;
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
+  position: relative;
+  transition: background 0.3s ease;
 }
+
+/* ✨ ✨ ✨ نظام النجوم عالي الأداء (Super Lightweight) ✨ ✨ ✨ */
+.stars-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  will-change: transform; /* تحضير المتصفح لتفعيل تسريع الكارت */
+}
+
+.stars {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-repeat: repeat;
+  /* تحويل الإضاءة لجعلها ناصعة وخفيفة بالـ opacity بدلاً من الفلاتر الثقيلة */
+  opacity: 0.8;
+}
+
+/* الطبقة الأولى: نجوم صغيرة بيضاء صافية */
+.layer-1 {
+  background-image:
+    radial-gradient(1.5px 1.5px at 20px 30px, #ffffff 100%, rgba(255,255,255,0)),
+    radial-gradient(2px 2px at 75px 120px, #ffffff 100%, rgba(255,255,255,0)),
+    radial-gradient(1.5px 1.5px at 140px 70px, #ffffff 100%, rgba(255,255,255,0));
+  background-size: 200px 200px;
+  /* استخدام translate3d يُجبر المتصفح على تشغيل كرت الشاشة للتحريك */
+  animation: moveFast 40s linear infinite;
+}
+
+/* الطبقة الثانية: نجوم متوسطة بيضاء صافية بنمط توزيع مختلف */
+.layer-2 {
+  background-image:
+    radial-gradient(2px 2px at 45px 85px, #ffffff 100%, rgba(255,255,255,0)),
+    radial-gradient(2.5px 2.5px at 115px 40px, #ffffff 100%, rgba(255,255,255,0));
+  background-size: 280px 280px;
+  animation: moveMedium 65s linear infinite;
+  opacity: 0.6;
+}
+
+/* الطبقة الثالثة: نجوم متناثرة تومض مكانها فقط لتقليل حركات الاتجاهات المتداخلة الثقيلة */
+.layer-3 {
+  background-image:
+    radial-gradient(1.2px 1.2px at 15px 15px, #ffffff 100%, rgba(255,255,255,0)),
+    radial-gradient(2.2px 2.2px at 90px 160px, #ffffff 100%, rgba(255,255,255,0));
+  background-size: 350px 350px;
+  animation: justTwinkle 4s ease-in-out infinite;
+  opacity: 0.7;
+}
+
+/* 🔄 أنيميشن خفيف جداً يغير المحاور بالـ Transform */
+@keyframes moveFast {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(100px, -200px, 0); }
+}
+
+@keyframes moveMedium {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-150px, 150px, 0); }
+}
+
+@keyframes justTwinkle {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.8; }
+}
+
+/* الحاوية وتأثير الزجاج الخفيف المحسّن */
 .container {
-  margin: 0 auto;
+  position: relative;
+  z-index: 10;
+  margin: 40px auto;
   width: 100%;
   max-width: 650px;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.92); /* زيادة التعتيم قليلاً لتخفيف عبء الـ blur */
   padding: 30px;
   border-radius: 24px;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
-}
-
-h1 {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.stats {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  padding: 15px;
-  background: #f8f9ff;
-  border-radius: 14px;
-  font-weight: 700;
-}
-
-.filters {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.input-group {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-input {
-  flex: 1;
-  padding: 14px;
-  border-radius: 14px;
-  border: 2px solid #eee;
-  outline: none;
-}
-
-button {
-  cursor: pointer;
-  border: none;
-}
-
-button.add {
-  padding: 12px;
-  background: #6a11cb;
-  color: white;
-  border-radius: 12px;
-}
-
-ul {
-  list-style: none;
-  margin-top: 15px;
-}
-
-.goal-item {
-  background: #fff;
-  border: 1px solid #eee;
-  padding: 16px;
-  margin-bottom: 12px;
-  border-radius: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.task-text {
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.completed {
-  text-decoration: line-through;
-  color: gray;
-}
-
-.actions {
-  display: flex;
-  gap: 8px;
-}
-
-.edit {
-  background: #ffb400;
-  color: white;
-  padding: 6px 10px;
-  border-radius: 8px;
-}
-
-.delete {
-  background: #ff4d4d;
-  color: white;
-  padding: 6px 10px;
-  border-radius: 8px;
-}
-
-/* ✨ Inline edit input */
-.edit-input {
-  padding: 8px;
-  border-radius: 10px;
-  border: 2px solid #6a11cb;
-  width: 100%;
-}
-
-.container {
-  margin: 20px auto;
-  width: 100%;
-  max-width: 650px;
-  background: #ffffff;
-  padding: 30px;
-  border-radius: 24px;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
-  transition: all 0.3s ease;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, background 0.3s ease;
 }
 
 h1 {
   text-align: center;
   margin-bottom: 20px;
   color: #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
 }
 
 .stats {
@@ -413,23 +381,6 @@ h1 {
 .stats span {
   flex: 1;
   text-align: center;
-}
-
-.dark-btn {
-  width: 100%;
-  margin-bottom: 15px;
-  padding: 12px;
-  border-radius: 12px;
-  border: none;
-  background: #222;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.dark-btn:hover {
-  background: #111;
 }
 
 .filters {
@@ -452,21 +403,22 @@ input {
   flex: 1;
   padding: 14px;
   border-radius: 14px;
-  border: 2px solid #eee;
+  border: 2px solid #e2e8f0;
   outline: none;
-  transition: all 0.3s;
+  transition: border-color 0.2s;
   font-size: 15px;
+  background: #fff;
 }
 
 input:focus {
   border-color: #6a11cb;
-  box-shadow: 0 0 10px rgba(106, 17, 203, 0.15);
 }
 
 button {
   border: none;
   cursor: pointer;
-  transition: all 0.3s;
+  font-weight: 600;
+  transition: background 0.2s, transform 0.2s;
 }
 
 button:hover {
@@ -474,11 +426,10 @@ button:hover {
 }
 
 button.add {
-  padding: 12px 15px;
+  padding: 12px 20px;
   background: #6a11cb;
   color: white;
   border-radius: 12px;
-  font-weight: 600;
 }
 
 button.add:hover {
@@ -490,13 +441,6 @@ button.add:hover {
   font-size: 13px;
   margin-bottom: 8px;
   min-height: 18px;
-  font-weight: 600;
-}
-
-.success {
-  color: #28a745;
-  font-size: 14px;
-  margin-bottom: 10px;
   font-weight: 600;
 }
 
@@ -514,7 +458,6 @@ ul::-webkit-scrollbar {
 
 ul::-webkit-scrollbar-track {
   background: #f1f1f1;
-  border-radius: 10px;
 }
 
 ul::-webkit-scrollbar-thumb {
@@ -523,8 +466,8 @@ ul::-webkit-scrollbar-thumb {
 }
 
 .goal-item {
-  background: white;
-  border: 1px solid #eee;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   padding: 16px;
   margin-bottom: 12px;
   border-radius: 16px;
@@ -532,49 +475,30 @@ ul::-webkit-scrollbar-thumb {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  transition: all 0.3s ease;
-  animation: fadeIn 0.3s ease;
+  transition: transform 0.2s;
 }
 
 .goal-item:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  transform: translateY(-2px);
 }
 
 .task-text {
   cursor: pointer;
   font-size: 15px;
   font-weight: 600;
-  transition: 0.2s;
   word-break: break-word;
-}
-
-.task-text:hover {
-  color: #6a11cb;
 }
 
 .completed {
   text-decoration: line-through;
-  color: gray;
-  opacity: 0.7;
+  color: #94a3b8;
+  opacity: 0.65;
 }
 
 .date {
   display: block;
   margin-top: 6px;
-  color: #888;
+  color: #64748b;
   font-size: 12px;
 }
 
@@ -584,7 +508,7 @@ ul::-webkit-scrollbar-thumb {
 }
 
 .actions button {
-  padding: 7px 12px;
+  padding: 7px 14px;
   border-radius: 10px;
   font-size: 12px;
   font-weight: 600;
@@ -608,79 +532,84 @@ ul::-webkit-scrollbar-thumb {
   background: #e63e3e;
 }
 
+.edit-input {
+  padding: 8px;
+  border-radius: 10px;
+  border: 2px solid #6a11cb;
+  width: 100%;
+  background: white;
+  color: #333;
+}
+
 .empty-state {
   text-align: center;
   padding: 40px 20px;
-  color: #999;
+  color: #64748b;
   font-size: 15px;
-  background: #f9f9f9;
+  background: #f8fafc;
   border-radius: 14px;
   margin-top: 15px;
 }
 
-/* Dark Mode */
-
+/* 🌙 Dark Mode */
 .dark {
-  background: #1f2937;
-  color: white;
+  background: rgba(30, 41, 59, 0.94);
+  color: #f8fafc;
 }
 
 .dark h1 {
-  color: white;
+  color: #ffffff;
 }
 
 .dark .goal-item {
-  background: #374151;
-  border-color: #4b5563;
+  background: #334155;
+  border-color: #475569;
 }
 
 .dark .stats {
-  background: #374151;
-  color: white;
+  background: #1e293b;
+  color: #e2e8f0;
 }
 
 .dark input {
-  background: #374151;
-  color: white;
-  border-color: #4b5563;
+  background: #334155;
+  color: #ffffff;
+  border-color: #475569;
+}
+
+.dark .edit-input {
+  background: #1e293b;
+  color: #fff;
 }
 
 .dark .date {
-  color: #d1d5db;
+  color: #94a3b8;
 }
 
 .dark .empty-state {
-  background: #374151;
-  color: white;
+  background: #1e293b;
+  color: #94a3b8;
 }
 
-/* Mobile */
-
+/* 📱 Mobile */
 @media (max-width: 768px) {
   .container {
-    width: 95%;
+    width: 92%;
     padding: 20px;
   }
 
-  .input-group {
+  .input-group, .filters, .stats, .goal-item {
     flex-direction: column;
+    align-items: stretch;
   }
 
-  .filters {
-    flex-direction: column;
-  }
-
-  .stats {
-    flex-direction: column;
-  }
-
-  .goal-item {
-    flex-direction: column;
-    align-items: flex-start;
+  .stats span {
+    padding: 4px 0;
   }
 
   .actions {
     width: 100%;
+    margin-top: 10px;
   }
 
   .actions button {
